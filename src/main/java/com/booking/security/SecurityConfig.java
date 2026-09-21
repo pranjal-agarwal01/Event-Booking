@@ -38,6 +38,9 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
+                        // The web UI: static files served from src/main/resources/static.
+                        .requestMatchers(HttpMethod.GET, "/", "/index.html", "/favicon.svg", "/assets/**")
+                        .permitAll()
                         .requestMatchers("/api/v1/auth/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/events/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/events/**").hasRole("ADMIN")

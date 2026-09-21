@@ -1,8 +1,10 @@
 package com.booking.auth;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -81,6 +83,20 @@ class AuthAndAccessControlIT extends AbstractIntegrationTest {
     @DisplayName("public endpoints stay open")
     void publicEndpointsOpen() throws Exception {
         mockMvc.perform(get("/api/v1/events")).andExpect(status().isOk());
+    }
+
+    @Test
+    @DisplayName("the web UI and its assets are public, but other unknown paths are not")
+    void webUiIsPublic() throws Exception {
+        mockMvc.perform(get("/")).andExpect(status().isOk());
+        mockMvc.perform(get("/index.html"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("Event Booking")));
+        mockMvc.perform(get("/assets/app.js")).andExpect(status().isOk());
+        mockMvc.perform(get("/assets/app.css")).andExpect(status().isOk());
+
+        // Opening up the UI must not open up everything else.
+        mockMvc.perform(get("/some/other/path")).andExpect(status().isUnauthorized());
     }
 
     @Test

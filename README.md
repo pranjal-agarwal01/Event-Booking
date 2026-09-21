@@ -7,6 +7,10 @@ the same millisecond.**
 Exactly one of them gets the seat. There is a 50-thread test that proves it, run
 against a real PostgreSQL, for two different locking strategies.
 
+**Live demo: https://booking-api-rdhs.onrender.com**. Open it, pick an event, and
+run the race test yourself. It is on free hosting, so the first visit after a quiet
+spell can take up to a minute while the server wakes up.
+
 ---
 
 ## Stack
@@ -21,6 +25,7 @@ against a real PostgreSQL, for two different locking strategies.
 | Migrations | Flyway |
 | Docs | springdoc-openapi (Swagger UI) |
 | Tests | JUnit 5, Mockito, Testcontainers |
+| Web UI | Plain HTML, CSS and JavaScript served by the same app; no build step |
 | Packaging | Multi-stage Docker build, non-root runtime |
 | Hosting | Render (Blueprint in `render.yaml`) |
 
@@ -37,6 +42,7 @@ Or run the whole thing in containers:
 docker compose --profile app up -d --build
 ```
 
+- **Web UI** — http://localhost:8080
 - **Swagger UI** — http://localhost:8080/swagger-ui.html
 - **Health** — http://localhost:8080/actuator/health
 
@@ -52,6 +58,26 @@ curl -s -X POST localhost:8080/api/v1/auth/login \
   -H 'Content-Type: application/json' \
   -d '{"email":"user@booking.dev","password":"password123"}'
 ```
+
+## Web interface
+
+The app serves a single-page interface at `/`, from the same origin as the API, so
+there is no CORS setup and no second service to deploy.
+
+- **Events and seat maps**, with availability refreshed every few seconds.
+- **The booking flow**: hold seats (a PENDING booking with a live countdown), then
+  confirm or release them. A double-clicked "Hold" reuses the same
+  `Idempotency-Key`, so it cannot create two bookings.
+- **The race test**: fires 10, 25 or 50 booking requests for one seat at the same
+  moment and shows each result. Exactly one gets `201 Created`. The rest get
+  `409 Conflict`, split by how they lost: refused up front because the seat was
+  already held, or rejected at write time by the `@Version` check.
+- **Admin**: the demo admin can create events.
+
+It is plain HTML, CSS and JavaScript in `src/main/resources/static`, with no
+framework and no build step, so the project stays a Java project. Every value from
+the API is HTML-escaped before it is rendered, which matters here because the demo
+admin account is public and anyone can name an event.
 
 ## Configuration
 
@@ -210,7 +236,7 @@ not remove a seat from sale forever. The scan matches the
 mvn test
 ```
 
-19 tests, the integration ones against real PostgreSQL via Testcontainers (not
+20 tests, the integration ones against real PostgreSQL via Testcontainers (not
 H2 — the locking behaviour under test is exactly what differs between databases).
 
 | Test | What it proves |
@@ -218,7 +244,7 @@ H2 — the locking behaviour under test is exactly what differs between database
 | `OptimisticLockingConcurrencyIT` | 50 threads, 1 seat, `@Version` → exactly 1 winner |
 | `PessimisticLockingConcurrencyIT` | Same, with `SELECT ... FOR UPDATE` → exactly 1 winner |
 | `BookingFlowIT` | hold → confirm → cancel, seat statuses follow; duplicate `Idempotency-Key` returns the same booking; double-book returns 409; illegal transitions return 409 |
-| `AuthAndAccessControlIT` | 401 anonymous, 403 for USER on admin routes, refresh rotation invalidates the old token, login never reveals whether an email exists |
+| `AuthAndAccessControlIT` | 401 anonymous, 403 for USER on admin routes, refresh rotation invalidates the old token, login never reveals whether an email exists, the web UI is public while other paths stay protected |
 | `BookingExpiryJobIT` | Stale holds are released; confirmed bookings are never touched |
 | `EventControllerTest` | Validation errors, 404s and malformed path variables all return the standard error shape |
 | `EventServiceTest` | Seat-label generation, pure unit test, no Spring |
@@ -301,7 +327,8 @@ for. Each one has a real answer in the code — go find it before you need it.
 - [x] Users, JWT auth with roles, refresh-token rotation
 - [x] Booking flow with optimistic + pessimistic locking and idempotency keys
 - [x] Hold expiry job, Dockerfile, container compose profile
-- [x] Render Blueprint for one-click deployment
+- [x] Render Blueprint for one-click deployment, live on Render
+- [x] Web UI with a live race test
 - [ ] Payment step on confirm
 - [ ] Redis cache for seat maps; rate limiting on auth
 - [ ] `ShedLock` so the expiry job is safe on multiple instances

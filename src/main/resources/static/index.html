@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Event Booking — one seat, one booking</title>
+  <meta name="description" content="Seat booking on a Spring Boot API that guarantees one seat, one booking, even when dozens of requests arrive at the same instant.">
+  <meta name="theme-color" content="#4f46e5">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/assets/app.css">
+  <script type="module" src="/assets/app.js"></script>
+</head>
+<body>
+  <a class="skip" href="#view">Skip to content</a>
+
+  <header class="topbar">
+    <div class="container topbar-inner">
+      <a class="brand" href="#/" aria-label="Event Booking home">
+        <img src="/favicon.svg" width="28" height="28" alt="">
+        <span>Event Booking</span>
+      </a>
+      <nav class="nav" aria-label="Main">
+        <a href="#/" data-nav="events">Events</a>
+        <a href="#/bookings" data-nav="bookings">Bookings</a>
+        <a class="ext" href="/swagger-ui.html" target="_blank" rel="noopener">API docs</a>
+        <a class="ext" href="https://github.com/pranjal-agarwal01/Event-Booking" target="_blank" rel="noopener">GitHub</a>
+      </nav>
+      <div id="user-area" class="user-area"></div>
+    </div>
+  </header>
+
+  <main id="view" class="container" tabindex="-1"></main>
+
+  <footer class="footer container">
+    <span id="api-status" class="status"><span class="dot"></span><span>Checking API…</span></span>
+    <span>Spring Boot 3 · Java 21 · PostgreSQL ·
+      <a href="/swagger-ui.html" target="_blank" rel="noopener">API docs</a> ·
+      <a href="https://github.com/pranjal-agarwal01/Event-Booking" target="_blank" rel="noopener">Source</a></span>
+  </footer>
+
+  <dialog id="auth-dialog" class="dialog" aria-labelledby="auth-title">
+    <form method="dialog" class="dialog-close"><button class="icon-btn" aria-label="Close">&times;</button></form>
+    <h2 id="auth-title">Sign in</h2>
+    <p id="auth-note" class="muted small"></p>
+    <div class="demo-row">
+      <button type="button" class="btn btn-soft" data-action="demo-login" data-role="user">Demo user</button>
+      <button type="button" class="btn btn-soft" data-action="demo-login" data-role="admin">Demo admin</button>
+    </div>
+    <p class="divider"><span>or use your own account</span></p>
+    <div class="tabs" role="tablist" aria-label="Account">
+      <button type="button" role="tab" aria-selected="true" data-tab="login">Sign in</button>
+      <button type="button" role="tab" aria-selected="false" data-tab="register">Create account</button>
+    </div>
+    <p id="auth-error" class="form-error" role="alert"></p>
+    <form id="login-form" class="form">
+      <label>Email<input name="email" type="email" autocomplete="username" required></label>
+      <label>Password<input name="password" type="password" autocomplete="current-password" required></label>
+      <button class="btn btn-primary btn-block">Sign in</button>
+    </form>
+    <form id="register-form" class="form" hidden>
+      <label>Full name<input name="fullName" maxlength="150" autocomplete="name" required></label>
+      <label>Email<input name="email" type="email" autocomplete="email" required></label>
+      <label>Password <span class="hint">8–72 characters</span>
+        <input name="password" type="password" minlength="8" maxlength="72" autocomplete="new-password" required></label>
+      <button class="btn btn-primary btn-block">Create account</button>
+    </form>
+  </dialog>
+
+  <dialog id="event-dialog" class="dialog" aria-labelledby="event-title">
+    <form method="dialog" class="dialog-close"><button class="icon-btn" aria-label="Close">&times;</button></form>
+    <h2 id="event-title">New event</h2>
+    <p class="muted small">Seats are generated automatically in rows of ten: A1–A10, B1–B10, and so on.</p>
+    <p id="event-error" class="form-error" role="alert"></p>
+    <form id="event-form" class="form">
+      <label>Name<input name="name" maxlength="200" required></label>
+      <label>Venue<input name="venue" maxlength="200" required></label>
+      <div class="form-row">
+        <label>Starts at<input name="startsAt" type="datetime-local" required></label>
+        <label>Seats<input name="totalSeats" type="number" min="1" max="260" value="30" required></label>
+      </div>
+      <button class="btn btn-primary btn-block">Create event</button>
+    </form>
+  </dialog>
+
+  <div id="toasts" class="toasts" aria-live="polite"></div>
+</body>
+</html>

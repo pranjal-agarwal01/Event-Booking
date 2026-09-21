@@ -1,0 +1,48 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: booking-postgres
+    environment:
+      POSTGRES_DB: bookingdb
+      POSTGRES_USER: booking
+      POSTGRES_PASSWORD: booking
+    ports:
+      - "5432:5432"
+    volumes:
+      - booking-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U booking -d bookingdb"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # Only starts with: docker compose --profile app up -d --build
+  # The default `docker compose up -d` brings up just Postgres, for running the
+  # app from your IDE or `mvn spring-boot:run`.
+  api:
+    profiles: ["app"]
+    build: .
+    container_name: booking-api
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      # Same variables Render sets, so this exercises the production config path.
+      DB_HOST: postgres
+      DB_PORT: "5432"
+      DB_NAME: bookingdb
+      DB_USERNAME: booking
+      DB_PASSWORD: booking
+      PORT: "10000"
+      LOGGING_LEVEL_COM_BOOKING: INFO
+      JWT_SECRET: ${JWT_SECRET:-Y2hhbmdlLW1lLWluLXByb2R1Y3Rpb24tcGxlYXNlLTQ4LWJ5dGVzLWxvbmctb2s=}
+    ports:
+      - "8080:10000"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:10000/actuator/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  booking-pgdata:

@@ -1,0 +1,47 @@
+# Render Blueprint: a Postgres database plus the API, built from the Dockerfile.
+# Deploy it from the Render dashboard: New -> Blueprint -> select this repository.
+#
+# Both live in the same region so the API reaches the database over Render's
+# private network (the "host" property below is the internal hostname).
+
+databases:
+  - name: booking-db
+    databaseName: bookingdb
+    user: booking
+    plan: free
+    region: singapore
+
+services:
+  - type: web
+    name: booking-api
+    runtime: docker
+    plan: free
+    region: singapore
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /actuator/health
+    envVars:
+      - key: DB_HOST
+        fromDatabase:
+          name: booking-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: booking-db
+          property: port
+      - key: DB_NAME
+        fromDatabase:
+          name: booking-db
+          property: database
+      - key: DB_USERNAME
+        fromDatabase:
+          name: booking-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: booking-db
+          property: password
+      # Render generates a random value once and keeps it across deploys.
+      - key: JWT_SECRET
+        generateValue: true
+      - key: LOGGING_LEVEL_COM_BOOKING
+        value: INFO
